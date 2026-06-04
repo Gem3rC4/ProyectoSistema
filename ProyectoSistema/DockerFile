@@ -1,0 +1,30 @@
+﻿# --- Etapa 1: Compilación (Build) ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /app
+
+#COPIAR LOS ARCHIVOS DE PROYECTO
+COPY . ./
+
+#RESTAURAR LAS DEPENDENCIAS
+RUN dotnet restore --verbosity detailed
+
+#COMPILAR Y PUBLICAR EN MODO RELEASE
+RUN dotnet publish -c Release -o /out --verbosity detailed
+
+#IMEGEN LIGERA PARA EJECUCIÓN
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+#COPIAR LA SALIDA DE LA COMPILACIÓN
+COPY --from=build /out ./
+
+#CONFIGURAR VARIABLES DE ENTORNNO
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS=http://+:8080
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
+#EXPOSE EL PUERTO 80
+EXPOSE 8080
+
+#COMAND0 DE INICIO
+ENTRYPOINT ["dotnet", "ProyectoSistema.dll"]
